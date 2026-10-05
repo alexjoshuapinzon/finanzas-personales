@@ -1,0 +1,33 @@
+# Dependencias de npm
+node_modules/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
+
+# Empaquetados
+dist/
+dist-ssr/
+build/
+*.zip
+
+# Secretos: nunca subas la URL del Web App a un repositorio público,
+# porque es la llave que da acceso de lectura y escritura a tu hoja.
+.env
+.env.*
+*.secret.json
+
+# ---------------------------------------------------------------------------
+# Esqueleto de Vite/React que se quedó sin usar cuando la app pasó a ser un
+# único index.html. No forma parte del proyecto: bórralo cuando quieras.
+# Ver la nota de la sección 1 del README.
+# ---------------------------------------------------------------------------
+src/
+package.json
+package-lock.json
+tsconfig.json
+vite.config.ts
