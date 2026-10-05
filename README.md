@@ -20,11 +20,10 @@ y no hay conexión con tu banco.
 2. [Instalación](#2-instalación)
 3. [Cómo usar la app](#3-cómo-usar-la-app)
 4. [Instalar en el celular](#4-instalar-en-el-celular)
-5. [Publicar gratis en internet](#5-publicar-gratis-en-internet)
-6. [Cómo funciona](#6-cómo-funciona)
-7. [Seguridad](#7-seguridad)
-8. [Problemas frecuentes](#8-problemas-frecuentes)
-9. [Desarrollo](#9-desarrollo)
+5. [Cómo funciona](#5-cómo-funciona)
+6. [Seguridad](#6-seguridad)
+7. [Problemas frecuentes](#7-problemas-frecuentes)
+8. [Desarrollo](#8-desarrollo)
 
 ---
 
@@ -166,7 +165,7 @@ API_URL: 'https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec',
 La URL guardada desde la app tiene prioridad sobre la del código.
 
 > **No guardes la URL del Web App en repositorios públicos**: quien la lea puede leer y escribir tu
-> hoja. Ver [Seguridad](#7-seguridad).
+> hoja. Ver [Seguridad](#6-seguridad).
 
 ### 2.5 Comprobar la conexión
 
@@ -213,7 +212,8 @@ Si `?accion=datos` responde con las tres colecciones, la instalación está comp
 
 ## 4. Instalar en el celular
 
-Primero hay que publicarla en un sitio HTTPS (ver [sección 5](#5-publicar-gratis-en-internet)).
+La app se sirve desde un sitio HTTPS, por ejemplo el que GitHub Pages publica desde este
+repositorio.
 
 **Android (Chrome o Edge)**
 1. Abre la URL de la app.
@@ -227,32 +227,7 @@ Primero hay que publicarla en un sitio HTTPS (ver [sección 5](#5-publicar-grati
 
 ---
 
-## 5. Publicar gratis en internet
-
-Se publican cinco archivos: `index.html`, `manifest.webmanifest`, `sw.js` e
-`iconos/icon-192.png` + `iconos/icon-512.png`. El archivo `gas/Code.gs` **no** se publica: va en
-Google.
-
-### Netlify Drop
-1. Entra en [app.netlify.com/drop](https://app.netlify.com/drop).
-2. Arrastra la carpeta del proyecto.
-3. Obtienes una URL tipo `https://tu-app-123.netlify.app`.
-
-### GitHub Pages
-1. Sube el proyecto a un repositorio de GitHub.
-2. **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
-3. La app queda en `https://TU_USUARIO.github.io/TU_REPO/`.
-
-### Vercel
-1. Importa el repositorio en [vercel.com/new](https://vercel.com/new).
-2. **Build Command** vacío y **Output Directory** `.`.
-
-Todas las rutas del proyecto son relativas, así que funciona en la raíz de un dominio o en una
-subcarpeta sin cambios.
-
----
-
-## 6. Cómo funciona
+## 5. Cómo funciona
 
 ```
 index.html  (la app)
@@ -307,7 +282,7 @@ herramientas/              utilidades de desarrollo
 
 ---
 
-## 7. Seguridad
+## 6. Seguridad
 
 **La URL del Web App es una credencial.** Publicada como *Cualquier persona*, quien la tenga puede
 leer y escribir tu hoja.
@@ -340,7 +315,7 @@ Otros puntos a tener en cuenta:
 
 ---
 
-## 8. Problemas frecuentes
+## 7. Problemas frecuentes
 
 | Síntoma | Causa | Solución |
 |---|---|---|
@@ -358,7 +333,7 @@ Otros puntos a tener en cuenta:
 
 ---
 
-## 9. Desarrollo
+## 8. Desarrollo
 
 ```bash
 node herramientas/pruebas.mjs        # 86 pruebas del frontend
