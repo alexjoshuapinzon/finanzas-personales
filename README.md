@@ -1,41 +1,94 @@
 # Finanzas Personales
 
-App web de finanzas personales en español. Registra tus **cuentas**, anota **ingresos y egresos** y mira un **dashboard** con balance, gráficas y resumen del mes. Los datos viven en una **hoja de Google Sheets**, sin servidor propio ni cuotas.
+App web de finanzas personales en español. Registra tus cuentas, anota ingresos y egresos, y
+consulta un dashboard con balance, gráficas y resumen del mes.
 
-- Frontend: un solo archivo `index.html` (HTML + CSS + JS puro, sin build, sin dependencias npm).
-- Gráficas: [Chart.js](https://www.chartjs.org/) desde CDN.
-- Backend: [Google Apps Script](https://developers.google.com/apps-script) publicado como Web App (API REST con `doGet` y `doPost`).
-- Instalable: se puede añadir a la pantalla de inicio como una app nativa (PWA).
+Los datos se guardan en **tu propia hoja de Google Sheets**. No hay servidor, no hay base de datos
+y no hay conexión con tu banco.
 
----
-
-## 1. Contenido del proyecto
-
-```
-index.html                 ← la app completa (frontend)
-gas/Code.gs                ← el backend para Google Apps Script
-manifest.webmanifest       ← datos de la PWA (nombre, iconos, modo standalone)
-sw.js                      ← service worker: cachea el app para que abra sin internet
-iconos/icon-192.png        ← iconos de la app (generados, ver herramientas/)
-iconos/icon-512.png
-herramientas/              ← utilidades de desarrollo (tests, servidor local, iconos)
-README.md                  ← este archivo
-```
-
-> **Nota:** si vienes del esqueleto de Vite/React que había en esta carpeta, ya no se usa.
-> El frontend ahora es `index.html` a secas. Puedes borrar sin miedo `src/`, `node_modules/`,
-> `package.json`, `package-lock.json`, `tsconfig.json` y `vite.config.ts`.
+- **Frontend**: un solo archivo `index.html` (HTML + CSS + JavaScript puro, sin compilación).
+- **Gráficas**: [Chart.js](https://www.chartjs.org/).
+- **Backend**: [Google Apps Script](https://developers.google.com/apps-script) publicado como Web App
+  (API REST con `doGet` y `doPost`).
+- **Instalable**: se puede añadir a la pantalla de inicio del celular y funciona sin internet.
 
 ---
 
-## 2. Configurar la hoja de Google Sheets
+## Contenido
 
-### (a) Crear la hoja con las pestañas y encabezados correctos
+1. [Funcionalidades](#1-funcionalidades)
+2. [Instalación](#2-instalación)
+3. [Cómo usar la app](#3-cómo-usar-la-app)
+4. [Instalar en el celular](#4-instalar-en-el-celular)
+5. [Publicar gratis en internet](#5-publicar-gratis-en-internet)
+6. [Cómo funciona](#6-cómo-funciona)
+7. [Seguridad](#7-seguridad)
+8. [Problemas frecuentes](#8-problemas-frecuentes)
+9. [Desarrollo](#9-desarrollo)
 
-1. Ve a [sheets.google.com](https://sheets.google.com) y crea una hoja nueva (o usa una que ya tengas).
-2. Renombra la pestaña `Hoja 1` a **`Cuentas`**.
-3. Crea dos pestañas más y ponles estos nombres exactos: **`Movimientos`** y **`Categorias`**.
-4. Escribe los encabezados **en la fila 1**, con mayúscula inicial y sin acentos:
+---
+
+## 1. Funcionalidades
+
+### Cuentas
+- Alta, edición y baja de cuentas con **nombre, tipo** (efectivo, banco, billetera digital, otro),
+  **moneda** y **saldo inicial**.
+- El saldo de cada cuenta se calcula solo: `saldo inicial + ingresos − egresos`.
+- No se permite borrar una cuenta que tenga movimientos asociados.
+
+### Movimientos
+- Alta, edición y baja de movimientos con **fecha, descripción, categoría, tipo** (ingreso o egreso),
+  **monto** y **cuenta** asociada.
+- La fecha viene puesta en el día actual y se puede cambiar.
+- La categoría es una lista desplegable y se pueden **crear categorías nuevas** desde el propio
+  formulario o desde la sección *Categorías*.
+- Tabla ordenada de más reciente a más antigua, con **filtros** por rango de fechas, categoría, tipo,
+  cuenta y búsqueda de texto.
+- Totales de ingresos, egresos y balance de lo que se está viendo.
+
+### Captura rápida
+- Botón flotante **+ Añadir gasto** siempre visible, en cualquier sección.
+- **Atajos** con las categorías que más usas y su último monto: un toque rellena el formulario.
+- Al guardar, la notificación indica **cuánto queda del mes** y **cuánto llevas gastado en esa
+  categoría**.
+
+### Dashboard
+- **Balance total** y tarjetas con el saldo de cada cuenta.
+- **Resumen del mes actual**: ingresos, egresos y ahorro neto, con el porcentaje ahorrado.
+- **Gráfica de barras** de ingresos frente a egresos por mes, con selector de rango
+  (3, 6 o 12 meses, este año, todo, o fechas a medida).
+- **Gráfica circular** de egresos por categoría, sobre el mismo rango.
+
+### Progreso y disciplina
+Todo esto se calcula a partir de los movimientos, sin datos adicionales:
+
+- **Racha** de días consecutivos registrando, con **día de gracia**: si hoy todavía no registras
+  nada, la racha no se pierde hasta que termine el día.
+- **XP y 5 niveles**: Principiante → Constante → Disciplinado → Experto → Maestro, con barra de
+  avance y los XP que faltan para el siguiente nivel.
+- **Panel de cumplimiento** de los últimos 7 días.
+- **6 logros**: Primer paso, Racha de 7, Racha de 30, Centinela, Mes completo y Experto.
+- **Avisos contextuales** sobre el registro del día y el gasto promedio del mes.
+
+### Otros detalles
+- **Formato de moneda** con separador de miles y 2 decimales, ajustado a la configuración regional
+  y a la moneda elegida.
+- **Modo oscuro** automático según el tema del sistema.
+- **Sin internet**: guarda una copia local y muestra la última información conocida con un aviso.
+- **Instalable** como PWA, con ícono propio y apertura a pantalla completa.
+
+---
+
+## 2. Instalación
+
+La instalación es de una sola vez. A partir de ahí, la URL queda guardada en el dispositivo.
+
+### 2.1 Crear la hoja
+
+Crea una hoja nueva en [sheets.google.com](https://sheets.google.com) y déjala vacía.
+
+El script crea solo las pestañas, los encabezados y las 8 categorías iniciales. Si prefieres
+crearlas tú, deben quedar así (encabezados en la fila 1, sin acentos):
 
 | Pestaña | Columnas (A → H) |
 |---|---|
@@ -43,216 +96,189 @@ README.md                  ← este archivo
 | **Movimientos** | `ID` · `Fecha` · `Descripcion` · `Categoria` · `Tipo` · `Monto` · `CuentaId` · `CreadoEn` |
 | **Categorias** | `ID` · `Nombre` |
 
-5. Deja las filas 2 y siguientes vacías.
+Detalles importantes:
 
-**Detalles que importan:**
+- Si creas las pestañas a mano y quieres las 8 categorías iniciales, tienes que escribirlas tú: el
+  script solo las siembra en una pestaña completamente vacía.
+- **`Fecha` debe ser una columna de texto**, no de fecha. Selecciona la columna B de `Movimientos` →
+  *Formato → Número → Texto plano*. Así se evitan desfases de zona horaria.
+- `Monto` y `SaldoInicial` se guardan como números, con formato `#,##0.00`.
+- `Categoria` guarda el **nombre** de la categoría, para que la hoja se lea de un vistazo.
+- `CreadoEn` registra el momento de creación y sirve para ordenar de forma estable los movimientos
+  que comparten la misma fecha. El script la rellena automáticamente.
 
-- **`Fecha` es una columna de TEXTO**, no de fecha. Selecciona la columna B de `Movimientos` →
-  *Formato → Número → Texto plano*. Así no hay desfases de zona horaria al leer los datos.
-- **`Monto` y `SaldoInicial`** se guardan como números (el script les pone formato `#,##0.00`).
-- **`Categoria` guarda el nombre** de la categoría, no su id, para que la hoja se entienda a simple vista.
-- **`CreadoEn` es una columna extra** que guarda la fecha y hora de creación. Sirve para ordenar de
-  forma estable los movimientos que comparten la misma fecha. Si prefieres no usarla, deja la
-  columna vacía: el script la rellena automáticamente.
+### 2.2 Pegar el script
 
-> **Atajo:** los pasos 1–5 son opcionales. El script **crea las pestañas, los encabezados y las 8
-> categorías iniciales por su cuenta** si no las encuentra. Sólo asegúrate de que el libro exista.
+**Opción recomendada — desde la hoja.** En Google Sheets abre **Extensiones → Apps Script**. El
+script queda asociado a tu hoja automáticamente. Borra el contenido de `Code.gs`, pega todo el
+código de [`gas/Code.gs`](gas/Code.gs) y guarda.
 
----
+**Alternativa — proyecto independiente.** Si creaste el proyecto en
+[script.google.com](https://script.google.com) → *Nuevo proyecto*, el script no sabe todavía qué
+hoja usar. Tienes dos formas de indicárselo:
 
-### (b) Pegar el script en Apps Script
+- Edita [`gas/Code.gs`](gas/Code.gs) y rellena la constante de la línea 64:
 
-**Opción 1 — la recomendada. Créalo desde la hoja** (el script queda "adherido" a ella):
+  ```js
+  var ID_HOJA = '1AbCdEf...';
+  ```
 
-1. Abre tu hoja de Google Sheets.
-2. Menú **Extensiones → Apps Script**. Se abre un editor con un `Code.gs` ya asociado a tu hoja.
-3. Borra el contenido, pega **todo** el código de [`gas/Code.gs`](gas/Code.gs) y guarda (Ctrl+S).
+  El ID es lo que va entre `/d/` y `/edit` en la URL de tu hoja:
+  `https://docs.google.com/spreadsheets/d/`**`1AbCdEf...`**`/edit`
 
-> **Importante:** si creas el proyecto en [script.google.com](https://script.google.com) → *Nuevo proyecto*,
-> el script queda **independiente** y `SpreadsheetApp.getActiveSpreadsheet()` devuelve `null`
-> (error: *"Cannot read properties of null"*). Si lo hiciste así, usa la Opción 2.
+- O ejecuta **una sola vez** la función `conectar()`: elígela en la lista de funciones del editor y
+  pulsa *Ejecutar*. El ID queda guardado en las propiedades del script.
 
-**Opción 2 — proyecto independiente** (si ya lo creaste así):
+Después guarda los cambios y **vuelve a publicar** (siguiente apartado).
 
-1. Abre [script.google.com](https://script.google.com) → **+ Nuevo proyecto**.
-2. Pega el código de `gas/Code.gs` en `Code.gs` y guarda.
-3. En `gas/Code.gs`, línea 55, pega el **ID de tu hoja** en la constante:
+### 2.3 Publicar como Web App
 
-   ```js
-   var ID_HOJA = '1AbCdEf...';
-   ```
-
-   El ID está en la URL de tu hoja, entre `/d/` y `/edit`:
-   `https://docs.google.com/spreadsheets/d/`**`1AbCdEf...`**`/edit`
-
-   También puedes, en lugar de editar el código, ejecutar **una sola vez** la función
-   `conectar()`: elígela en la lista de funciones del editor y pulsa **Ejecutar**. Guarda el ID
-   en las propiedades del script.
-
-4. Si al ejecutar `conectar()` Google te pide autorización (porque `SpreadsheetApp.openById`
-   requiere el ámbito "hojas de cálculo"), acéptala: solo se concede acceso a tu cuenta.
-
-> No hay que pegar nada más: el script no usa bibliotecas externas.
-
----
-
-### (c) Publicarlo como Web App con acceso para "Cualquier persona"
-
-1. En el editor de Apps Script haz clic en **Implementar → Nueva implementación**.
+1. En el editor de Apps Script: **Implementar → Nueva implementación**.
 2. En el ícono de la llave (🔒) elige **Web app**.
-3. Configura:
-   - **Descripción**: `API de Finanzas Personales`
-   - **Ejecutar como**: **Yo** (tu cuenta)
-   - **Quién tiene acceso**: **Cualquier persona**  ← importante
-4. Clic en **Implementar** y acepta los permisos. Te pedirá iniciar sesión con una cuenta de Google
-   (es normal, es la seguridad de Google; no_publica nada fuera de tu cuenta).
-5. Al terminar verás la **URL del Web App**, con esta forma:
+3. Rellena:
+   - **Descripción**: por ejemplo `API de Finanzas Personales`
+   - **Ejecutar como**: **Yo**
+   - **Quién tiene acceso**: **Cualquier persona**
+4. Pulsa **Implementar** y acepta los permisos que pide Google.
+5. Copia la **URL del Web App**:
 
    ```
    https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec
    ```
 
-   **Copia esa URL.** Es la que conecta la app con tu hoja.
+> **Guardar no es publicar.** Cada vez que modifiques `Code.gs` tienes que volver a desplegar:
+> *Implementar → Gestionar implementaciones → ícono de lápiz → Editar → Versión: Nueva versión →
+> Implementar*.
 
-> **Cada vez que edites `Code.gs` tienes que volver a publicar** (Implementar → Gestionar
-> implementaciones → ícono de lápiz → Editar → *Versión: Nueva versión* → Implementar) para que los cambios
-> sirvan. Olvidar esto es el error más común.
+### 2.4 Configurar la URL en la app
 
----
+**Desde la app** — recomendado para probar. Abre la app, toca **⚙** en la esquina superior
+derecha, pega la URL, pulsa **Probar conexión** y después **Guardar**. Queda almacenada en ese
+navegador.
 
-### (d) Pegar la URL en la configuración de la app
-
-Hay dos formas, elige la que prefieras:
-
-**Opción A — en el código** (para siempre en todos los dispositivos):
-
-Abre `index.html`, ve a la constante `CONFIG` de arriba del todo y pega tu URL:
+**En el código** — para que valga en todos los dispositivos. En `index.html`, edita la constante
+`CONFIG` de la línea 795:
 
 ```js
-const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec',
-  // ...
-};
+API_URL: 'https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec',
 ```
 
-**Opción B — desde la app** (más cómoda, guarda la URL en ese dispositivo):
+La URL guardada desde la app tiene prioridad sobre la del código.
 
-Abre la app y toca el ícono ⚙ de la esquina superior derecha → pega la URL →
-**Probar conexión** → **Guardar**.
+> **No guardes la URL del Web App en repositorios públicos**: quien la lea puede leer y escribir tu
+> hoja. Ver [Seguridad](#7-seguridad).
 
-> La Opción B tiene prioridad sobre la del código, y es la que se guarda en el `localStorage`
-> del navegador. Si borras los datos del navegador, vuelve a pegarla.
+### 2.5 Comprobar la conexión
+
+Abre la URL del Web App en el navegador con estos parámetros:
+
+| URL | Qué devuelve |
+|---|---|
+| `…/exec?accion=salud` | `{"ok":true,…}` si el script está desplegado y responde |
+| `…/exec?accion=datos` | El JSON con `cuentas`, `movimientos` y `categorias` |
+| `…/exec?accion=diagnostico` | Nombre del libro, zona horaria y filas por pestaña |
+
+Si `?accion=datos` responde con las tres colecciones, la instalación está completa.
 
 ---
 
-## 3. Probar la conexión
+## 3. Cómo usar la app
 
-Abre tu URL del Web App en el navegador y deberías ver algo como:
+### Primer uso
 
-```json
-{"ok":true,"accion":"salud","version":"1.0.0","mensaje":"Conexión correcta con Google Sheets."}
-```
+1. Ve a **Cuentas** y crea la primera: nombre, tipo, moneda y saldo inicial.
+2. Ve a **Movimientos** y anota el primer movimiento con **+ Añadir gasto**.
+3. Elige o escribe una categoría. Si no existe, créala en el propio formulario.
+4. Al guardar, la notificación te dice cuánto queda del mes.
 
-- Si ves `{"ok":true,...,"cuentas":[],"movimientos":[],...}` al agregar `?accion=datos`, todo funciona.
-- Si ves `{"ok":false,"error":"..."}`, el mensaje te dice exactamente qué pasa.
-- Añade `?accion=diagnostico` para ver el nombre del libro, su zona horaria y cuántas filas tiene cada pestaña.
+### Dashboard
+- **Balance total** arriba, con los totales históricos de ingresos y egresos.
+- **Resumen del mes**: ingresos, egresos y ahorro neto con el porcentaje ahorrado.
+- Selector de rango para la gráfica de barras: últimos 3, 6 o 12 meses, este año, todo, o fechas
+  personalizadas.
+- **Tarjeta *Tu progreso***: nivel, XP, racha, cumplimiento de los últimos 7 días, logros y avisos.
+
+### Movimientos
+- Filtra por rango de fechas, categoría, tipo, cuenta o texto libre.
+- Cada fila tiene botones para **editar** y **eliminar**.
+- Abajo se muestran los totales de los resultados filtrados.
+- En *Categorías* puedes crear, renombrar y eliminar. Al renombrar una, se actualizan
+  automáticamente los movimientos que la usaban.
+
+### Cuentas
+- Cada tarjeta muestra el saldo actual, el tipo y el desglose de ingresos y egresos.
+- El saldo se recalcula con cada movimiento nuevo.
 
 ---
 
-## 4. Correr la app en tu computadora (opcional)
+## 4. Instalar en el celular
 
-Como es HTML puro, basta con abrir `index.html` en el navegador. Pero al abrirlo con `file://`
-el service worker no se registra, así que para probarlo como se verá publicado usa el servidor local:
+Primero hay que publicarla en un sitio HTTPS (ver [sección 5](#5-publicar-gratis-en-internet)).
 
-```bash
-node herramientas/servidor-local.mjs
-# → http://localhost:4173
-```
+**Android (Chrome o Edge)**
+1. Abre la URL de la app.
+2. Menú **⋮ → Instalar aplicación**.
+3. Aparece un ícono en la pantalla de inicio y se abre sin barra de navegador.
+
+**iPhone o iPad (Safari)**
+1. Abre la URL en **Safari**.
+2. Botón **Compartir**.
+3. **Añadir a pantalla de inicio → Añadir**.
 
 ---
 
 ## 5. Publicar gratis en internet
 
-Los 5 archivos que se publican son: `index.html`, `manifest.webmanifest`, `sw.js` e
-`iconos/icon-192.png` + `iconos/icon-512.png`. **No se sube `gas/Code.gs`** (ese va en Google).
+Se publican cinco archivos: `index.html`, `manifest.webmanifest`, `sw.js` e
+`iconos/icon-192.png` + `iconos/icon-512.png`. El archivo `gas/Code.gs` **no** se publica: va en
+Google.
 
-### Netlify Drop (lo más rápido, sin cuenta de consola)
-
+### Netlify Drop
 1. Entra en [app.netlify.com/drop](https://app.netlify.com/drop).
-2. Arrastra **la carpeta completa** del proyecto (o los archivos sueltos) a la página.
-3. En 10 segundos te da una URL tipo `https://tu-app-123.netlify.app`.
-4. (Opcional) Arrastra esa URL a la pestaña *Site configuration → Change site name* para ponerle un
-   nombre más corto.
+2. Arrastra la carpeta del proyecto.
+3. Obtienes una URL tipo `https://tu-app-123.netlify.app`.
 
-### Vercel (con GitHub, ideal si quieres actualizar después)
-
+### GitHub Pages
 1. Sube el proyecto a un repositorio de GitHub.
-2. Entra en [vercel.com/new](https://vercel.com/new) → importa el repo.
-3. **Build Command**: déjalo vacío. **Output Directory**: `.`.
-4. *Deploy*. Vercel sirve el `index.html` directamente; no necesita configuración extra.
+2. **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
+3. La app queda en `https://TU_USUARIO.github.io/TU_REPO/`.
 
-### GitHub Pages (gratis con tu cuenta de GitHub)
+### Vercel
+1. Importa el repositorio en [vercel.com/new](https://vercel.com/new).
+2. **Build Command** vacío y **Output Directory** `.`.
 
-```bash
-git init
-git add index.html manifest.webmanifest sw.js iconos/
-git commit -m "App de finanzas personales"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/TU_REPO.git
-git push -u origin main
-```
-
-Luego, en el repo: **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
-Tu app queda en `https://TU_USUARIO.github.io/TU_REPO/`.
-
-> Si usas una subcarpeta, todas las rutas del proyecto son relativas (`./manifest.webmanifest`,
-> `iconos/...`, `sw.js`), así que funciona sin cambiar nada.
+Todas las rutas del proyecto son relativas, así que funciona en la raíz de un dominio o en una
+subcarpeta sin cambios.
 
 ---
 
-## 6. Añadir la app a la pantalla de inicio del celular
-
-Primero publícala en un sitio HTTPS (cualquiera de las tres opciones de arriba). Después:
-
-### Android (Chrome / Edge)
-
-1. Abre la URL de tu app.
-2. Menú ⋮ → **Instalar aplicación** (o *Añadir a pantalla de inicio*).
-3. Confirma. Aparece un ícono en tu escritorio y se abre **sin barra de navegador**, como una
-   app normal.
-
-> Si no aparece la opción, el navegador la ofrece tras un par de visitas, o puedes usar
-   *Menú ⋮ → Compartir → Añadir a pantalla de inicio*.
-
-### iPhone / iPad (Safari)
-
-1. Abre la URL en **Safari** (en Chrome no funciona).
-2. Toca el botón **Compartir** (el cuadro con flecha hacia arriba).
-3. Baja hasta **"Añadir a pantalla de inicio"** → **Añadir**.
-4. Listo: ícono con el nombre *Finanzas* en tu pantalla de inicio.
-
-Ambos sistemas usan el ícono de `iconos/icon-192.png` y el nombre del `manifest.webmanifest`
-("Finanzas"). El service worker hace que la app abra al instante y siga mostrando la última
-información aunque no tengas internet.
-
----
-
-## 7. Cómo funciona la API
-
-### Lectura (GET)
+## 6. Cómo funciona
 
 ```
-GET ?accion=datos
-→ {"ok":true,"version":"1.0.0","generadoEn":"…","cuentas":[…],"movimientos":[…],"categorias":[…]}
-
-GET ?accion=salud
-→ {"ok":true,"mensaje":"Conexión correcta con Google Sheets."}
-
-GET ?accion=diagnostico
-→ {"ok":true,"libro":"…","hojas":[…],"zonaHoraria":"…"}
+index.html  (la app)
+    │  fetch()  →  …/exec?accion=…
+    ▼
+gas/Code.gs  (Apps Script)
+    │  valida y después escribe
+    ▼
+Google Sheets  (Cuentas · Movimientos · Categorias)
 ```
 
-### Escritura (POST, cuerpo JSON)
+La app nunca escribe en la hoja directamente: todas las escrituras pasan por el script, que valida
+los datos antes de guardarlos. Las peticiones usan `text/plain` en lugar de `application/json`
+para no requerir una verificación CORS previa, que es lo que suele hacer fallar a Apps Script.
+
+### API
+
+**Lectura (`GET`)**
+
+```
+?accion=datos        → { ok, version, generadoEn, cuentas, movimientos, categorias }
+?accion=salud        → { ok, version, mensaje }
+?accion=diagnostico  → { ok, libro, url, zonaHoraria, hojas }
+```
+
+**Escritura (`POST`, cuerpo JSON)**
 
 | Acción | Campos |
 |---|---|
@@ -260,94 +286,87 @@ GET ?accion=diagnostico
 | `actualizarCuenta` | `id`, `nombre`, `tipo`, `moneda`, `saldoInicial` |
 | `eliminarCuenta` | `id` |
 | `crearMovimiento` | `fecha`, `descripcion`, `categoria`, `tipo`, `monto`, `cuentaId` |
-| `actualizarMovimiento` | los anteriores + `id` |
+| `actualizarMovimiento` | los anteriores más `id` |
 | `eliminarMovimiento` | `id` |
 | `crearCategoria` | `nombre` |
 | `actualizarCategoria` | `id`, `nombre` |
 | `eliminarCategoria` | `id` |
 
-Todas las respuestas tienen la forma `{"ok": true, …}` o `{"ok": false, "error": "mensaje en español"}`.
-El frontend manda el cuerpo como `text/plain` a propósito: así el navegador no necesita pedir
-permiso CORS por adelantado (preflight), que es lo que hace fallar a Apps Script en la mayoría de
-implementaciones.
+Toda respuesta es `{"ok": true, …}` o `{"ok": false, "error": "mensaje en español"}`.
+
+### Estructura de archivos
+
+```
+index.html                 la app completa
+gas/Code.gs                backend para Google Apps Script
+manifest.webmanifest       datos de la PWA
+sw.js                      service worker (uso sin internet)
+iconos/                    iconos de la app
+herramientas/              utilidades de desarrollo
+```
 
 ---
 
-## 8. Decisiones que tomé (y conviene que sepas)
+## 7. Seguridad
 
-1. **Frontend en un solo archivo HTML con JS puro**, sin React. Pediste "un solo archivo" y Chart.js;
-   además desplegarlo se reduce a arrastrar archivos, sin compilar nada. React sólo se justificaría
-   si el proyecto crece mucho.
-2. **La columna `CreadoEn` es un añadido mío** en `Movimientos`. Sin ella, dos movimientos del mismo
-   día no se pueden ordenar de forma estable.
-3. **La categoría se guarda por nombre** en el movimiento (como pediste en los encabezados) en lugar
-   de por id. Al renombrar una categoría, el script actualiza todos los movimientos que la usaban.
-4. **No se puede borrar una cuenta con movimientos**, ni una categoría en uso. Es más seguro que
-   dejar filas huérfanas; el mensaje de error te dice cuántos elementos dependen de ella.
-5. **Los montos siempre son positivos**; el signo lo decide el campo `Tipo` (Ingreso / Egreso).
-6. **El balance total suma cuentas de distintas monedas a valor nominal**, sin conversión. Si tienes
-   cuentas en USD y MXN, la app te avisa con una nota en el dashboard.
-7. **Caché local.** La app guarda una copia en el navegador. Si la hoja no responde, te muestra la
-   última copia con un aviso en lugar de una pantalla en blanco. **Antes de publicar la URL
-   públicamente, ten en cuenta que quien la tenga puede leer y escribir tu hoja** (ver más abajo).
+**La URL del Web App es una credencial.** Publicada como *Cualquier persona*, quien la tenga puede
+leer y escribir tu hoja.
 
----
+Esto es lo esperado en uso personal, pero conviene tenerlo presente antes de compartir el enlace.
 
-## 9. Seguridad (léelo antes de compartir el enlace)
+Apps Script no ofrece autenticación en las Web Apps. Para añadir una contraseña, declara una clave y
+una función de autorización al principio de `Code.gs`:
 
-La Web App está publicada como **"Cualquier persona"**, así que **la URL es una llave**: quien la
-tenga puede leer y escribir tu hoja. Eso es perfecto para uso personal, pero si en algún momento
-compartes la URL (o publicas la app en internet) cualquiera que la descubra podría modificar tus
-datos.
+```js
+var CLAVE = 'mi-clave-secreta';
 
-Opciones si quieres cerrarlo:
+function autorizado(e) {
+  var p = (e && e.parameter) || {};
+  return (p.clave || '') === CLAVE;
+}
+```
 
-- **Google Apps Script no tiene autenticación nativa** para Web Apps. La vía habitual es delegated
-  auth: cambiar la opción "Cualquier persona" por "Solo yo" y usar un token de Google OAuth, lo
-  cual es bastante más complejo de montar.
-- Alternativa sencilla: usa una **contraseña en el script**. Añade al principio de `doGet` y `doPost`:
+Y en `doGet` y `doPost`, devuelve `{ok: false, error: 'No autorizado'}` cuando `!autorizado(e)`.
+Después añade `&clave=mi-clave-secreta` a la URL de la app. La clave viaja en la URL y en el
+almacenamiento local del navegador: es una barrera básica, no criptografía.
 
-  ```js
-  var CLAVE = 'mi-clave-secreta';
-  function autorizado(e) {
-    var p = (e && e.parameter) || {};
-    return (p.clave || '') === CLAVE;
-  }
-  ```
+Otros puntos a tener en cuenta:
 
-  y en `doGet`/`doPost` devuelve `{ok:false, error:'No autorizado'}` si `!autorizado(e)`. Luego
-  agrega `&clave=mi-clave-secreta` a la URL en `CONFIG.API_URL`. Ten en cuenta que viaja en el
-  `localStorage` y en la URL: es una barrera endeble, no criptografía.
+- **No subas la URL del Web App a un repositorio público** ni la pegues en un gist. Quedaría
+  accesible para siempre en el historial de commits.
+- La app guarda una copia de los datos en el navegador. En un dispositivo compartido, cualquiera con
+  acceso al perfil del navegador podría verla.
+- Nunca conectes la hoja con permisos de edición de terceros.
 
 ---
 
-## 10. Desarrollo: pruebas y utilidades
+## 8. Problemas frecuentes
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `Cannot read properties of null (reading 'getSheetByName')` | El script es un proyecto independiente y no sabe qué hoja usar | Créalo desde *Extensiones → Apps Script*, o rellena `ID_HOJA`, o ejecuta `conectar()` |
+| `No se encontró la hoja de cálculo...` | Igual que el anterior | Igual que el anterior |
+| "No hay ninguna URL de Web App configurada" | No se configuró la URL | ⚙ → pega la URL → Probar conexión → Guardar |
+| El navegador bloqueó la petición | `index.html` abierto con doble clic (origen `file://`) | Usa el servidor local y entra por `http://localhost:4173` |
+| "La respuesta del servidor no es JSON válido" | La URL termina en `/dev` | Vuelve a implementar y copia la URL que termina en `/exec` |
+| Conecta pero no guarda nada | Se guardó el código sin publicar | *Implementar → Gestionar implementaciones → Editar → Nueva versión → Implementar* |
+| "No se encontró la cuenta con id…" | Se renombró o borró una pestaña | Los nombres de pestaña deben ser exactos |
+| El desplegable de categorías llega vacío | Las pestañas se crearon a mano y `Categorias` quedó solo con el encabezado | Escribe las 8 categorías en `Categorias`, o borra esa pestaña para que el script la cree |
+| Las fechas salen un día corridas | La columna `Fecha` quedó con formato de fecha | Selecciona la columna y ponla en *Texto plano* |
+| El balance no cuadra | Hay cuentas en distintas monedas | El total suma a valor nominal, sin conversión |
+| No aparece la gráfica | Chart.js no se pudo descargar | Recarga la página con conexión a internet |
+
+---
+
+## 9. Desarrollo
 
 ```bash
-node herramientas/pruebas.mjs        # 44 pruebas del frontend (lógica, formato, validación)
-node herramientas/pruebas-gas.mjs    # 66 pruebas del backend (CRUD completo sobre Sheets falso)
-node herramientas/revision.mjs       # 43 comprobaciones estáticas de index.html
-node herramientas/generar-iconos.mjs # regenera los iconos PNG
+node herramientas/pruebas.mjs        # 86 pruebas del frontend
+node herramientas/pruebas-gas.mjs    # 79 pruebas del backend
+node herramientas/revision.mjs       # 57 comprobaciones estáticas de index.html
+node herramientas/generar-iconos.mjs # regenera los iconos
 node herramientas/servidor-local.mjs # sirve la app en http://localhost:4173
 ```
 
-Las pruebas del backend levantan un **Google Sheets falso en memoria**, así que puedes correr el
-CRUD completo (`crearCuenta` → `crearMovimiento` → `actualizar` → `eliminar`) sin tocar una hoja
-real. Fue así como se encontraron, entre otros, el `ok:true` que faltaba en `?accion=datos`
-(hacían fallar la app entera) y el parser de montos que no entendía `"5,000.50"`.
-
----
-
-## 11. Problemas frecuentes
-
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| `Cannot read properties of null (reading 'getSheetByName')` | El script es un proyecto independiente sin hoja asignada | Crea el script desde la hoja (Extensiones → Apps Script) o pega el ID en `ID_HOJA` / ejecuta `conectar()` |
-| "No hay ninguna URL de Web App configurada" | No pegaste la URL | ⚙ Configuración → pega la URL → Probar conexión |
-| El navegador bloqueó la petición | Abriste `index.html` con doble clic (origen `file://`) | Usa `node herramientas/servidor-local.mjs` y abre `http://localhost:4173` |
-| "La respuesta del servidor no es JSON válido" | Usaste la URL `/dev` en vez de `/exec` | Vuelve a Implementar y copia la URL que termina en `/exec` |
-| Los cambios no aparecen | Olvidaste volver a publicar tras editar el script | Implementar → Gestionar implementaciones → Editar → Nueva versión |
-| "No se encontró la cuenta con id…" | La hoja se borró o se renombró una pestaña | Revisa que los nombres de pestaña sean exactos |
-| Las fechas salen un día corridas | La columna `Fecha` quedó con formato de fecha | Selecciónala y ponla en *Texto plano* |
-| La gráfica no aparece | Chart.js no se descargó (sin internet la primera vez) | Recarga la página con internet |
-| Sale "Cannot read properties of null" | Editaste `index.html` y borraste un `id` | Corre `node herramientas/revision.mjs` |
+Las pruebas del backend levantan un Google Sheets falso en memoria, así que ejercitan el CRUD
+completo sin tocar una hoja real.
