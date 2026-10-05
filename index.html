@@ -425,6 +425,84 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .centrado{text-align:center}
 .mt-0{margin-top:0}
 .mb-0{margin-bottom:0}
+
+/* =========================================================================
+   Captura rápida: botón flotante, atajos y progreso
+   ========================================================================= */
+.fab{
+  position:fixed;z-index:45;
+  right:16px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 20px;border:0;border-radius:999px;
+  background:var(--brand);color:#fff;
+  font-weight:700;font-size:.95rem;cursor:pointer;
+  box-shadow:0 8px 24px color-mix(in srgb, var(--brand) 45%, transparent), var(--sombra);
+  -webkit-tap-highlight-color:transparent;
+  animation:fabEntra .22s cubic-bezier(.2,.9,.3,1);
+}
+.fab:active{transform:scale(.95)}
+.fab svg{width:22px;height:22px;stroke-width:2.6}
+@keyframes fabEntra{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@media (min-width:900px){
+  .fab{bottom:24px;right:24px}
+}
+
+.pastilla{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:999px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:.78rem;font-weight:700;backdrop-filter:blur(4px);
+}
+
+.atajos{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.atajos::-webkit-scrollbar{display:none}
+.atajo{
+  flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;
+  padding:8px 13px;border-radius:12px;cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--border);
+  font-size:.82rem;font-weight:650;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.atajo:hover{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-ink)}
+.atajo .monto{font-size:.7rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.atajo .marca{font-size:.66rem;color:var(--brand);font-weight:700;letter-spacing:.03em}
+
+.barra-nivel{height:9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+.barra-nivel > i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#f97316);border-radius:999px;transition:width .5s cubic-bezier(.2,.9,.3,1)}
+
+.dias{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.dia{
+  width:34px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:.64rem;color:var(--muted);font-weight:650;
+}
+.dia .punto{
+  width:26px;height:26px;border-radius:9px;display:grid;place-items:center;
+  background:var(--surface-2);border:1px solid var(--border);font-size:.8rem;color:var(--muted);
+}
+.dia.hecho .punto{background:var(--verde-soft);border-color:transparent;color:var(--verde)}
+.dia.hoy .punto{border-color:var(--brand);border-width:2px}
+.dia.hoy .punto.vacio{background:var(--rojo-soft);border-color:transparent;color:var(--rojo)}
+
+.logros{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-top:12px}
+.logro{
+  display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;
+  background:var(--surface-2);border:1px solid var(--border);opacity:.5;
+}
+.logro.logrado{opacity:1;background:var(--verde-soft);border-color:transparent}
+.logro .ico{font-size:1.25rem;flex:0 0 auto;filter:grayscale(1)}
+.logro.logrado .ico{filter:none}
+.logro .t{font-size:.76rem;font-weight:700;line-height:1.2}
+.logro .d{font-size:.68rem;color:var(--muted);line-height:1.25}
+.logro.logrado .d{color:var(--verde)}
+
+.alerta{
+  display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:12px;
+  background:var(--ambar);color:#1c1917;font-size:.84rem;font-weight:600;line-height:1.35;
+}
+@media (prefers-color-scheme: dark){ .alerta{color:#fef3c7} }
+.alerta .ico{font-size:1.1rem;flex:0 0 auto}
+.alerta.info{background:var(--brand-soft);color:var(--brand-ink)}
+.alerta.bien{background:var(--verde-soft);color:var(--verde)}
 </style>
 </head>
 <body>
@@ -483,6 +561,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
         <div class="fila-mini">
           <div class="mini"><div class="k">Ingresos totales</div><div class="v" id="d-total-ingresos">—</div></div>
           <div class="mini"><div class="k">Egresos totales</div><div class="v" id="d-total-egresos">—</div></div>
+          <div class="mini" id="d-racha-mini" style="display:none"><div class="k">Racha</div><div class="v">—</div></div>
         </div>
       </div>
 
@@ -542,6 +621,26 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
           <span class="sub" id="d-dona-sub"></span>
         </div>
         <div class="grafica-caja"><canvas id="grafica-dona"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-titulo">
+          <span>Tu progreso</span>
+          <span class="sub" id="p-sub"></span>
+        </div>
+
+        <div id="p-alertas"></div>
+
+        <div style="display:flex;align-items:baseline;gap:9px;margin-top:4px">
+          <div class="cifra" id="p-nivel" style="font-size:1.5rem;font-weight:700;letter-spacing:-.02em">—</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:600" id="p-xp">—</div>
+        </div>
+        <div class="barra-nivel" style="margin-top:8px"><i id="p-barra" style="width:0%"></i></div>
+        <div style="font-size:.74rem;color:var(--muted);margin-top:5px" id="p-siguiente">—</div>
+
+        <div class="dias" id="p-dias"></div>
+
+        <div class="logros" id="p-logros"></div>
       </div>
 
     </div>
@@ -643,6 +742,13 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     <form id="form-movimiento" novalidate>
       <div class="modal-cuerpo">
         <p class="error-form" id="mm-error"></p>
+
+        <div class="campo" style="margin-bottom:14px">
+          <label>Atajos</label>
+          <div class="atajos" id="mm-atajos"></div>
+          <span class="ayuda">Toca uno y se rellena todo. Los que más usas, primero.</span>
+        </div>
+
         <div class="form-rejilla dos">
           <div class="campo">
             <label for="mm-fecha">Fecha *</label>
@@ -781,6 +887,11 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     </div>
   </div>
 </div>
+
+<button class="fab" id="btn-rapido" aria-label="Añadir gasto o ingreso">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  <span>Añadir gasto</span>
+</button>
 
 <div id="toast" aria-live="polite" aria-atomic="true"></div>
 
@@ -1332,6 +1443,177 @@ function nombreCuenta(id) {
 
 
 /* =========================================================================
+   PROGRESO: rachas, XP, niveles, logros y cumplimiento diario
+   Todo se DERIVA de los movimientos: no hace falta guardar nada nuevo.
+   ========================================================================= */
+
+const NIVELES = [
+  { nombre: 'Principiante', min: 0 },
+  { nombre: 'Constante', min: 150 },
+  { nombre: 'Disciplinado', min: 500 },
+  { nombre: 'Experto', min: 1200 },
+  { nombre: 'Maestro', min: 2500 }
+];
+
+/** Conjunto de fechas (ISO) en las que hubo al menos un movimiento. */
+function diasConMovimientos() {
+  return new Set(estado.movimientos.map(m => m.fecha));
+}
+
+/** Racha actual: días consecutivos terminando hoy o ayer (día de gracia). */
+function rachaActual(hoy = hoyISO()) {
+  const dias = diasConMovimientos();
+  if (!dias.size) return 0;
+
+  // Si hoy todavía no hay nada, la racha sigue viva hasta que termine el día.
+  let cursor = deISO(hoy);
+  if (!dias.has(hoy)) {
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+    if (!dias.has(isoDe(cursor))) return 0;
+  }
+
+  let racha = 0;
+  while (dias.has(isoDe(cursor))) {
+    racha++;
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+  }
+  return racha;
+}
+
+/** Racha más larga alcanzada alguna vez. */
+function mejorRacha() {
+  const fechas = [...diasConMovimientos()].sort();
+  let mejor = 0, actual = 0, previa = null;
+  for (const f of fechas) {
+    const dia = deISO(f);
+    const dif = previa
+      ? Math.round((dia - deISO(previa)) / 86400000)
+      : 999;
+    actual = (dif === 1) ? actual + 1 : 1;
+    mejor = Math.max(mejor, actual);
+    previa = f;
+  }
+  return mejor;
+}
+
+/**
+ * XP: 10 por movimiento, +25 por el primer registro del día y un bono
+ * diario de 5 × racha. Fomenta el registro diario sin castigar los días sin gastar.
+ */
+function calcularXP() {
+  const dias = diasConMovimientos();
+  let xp = estado.movimientos.length * 10 + dias.size * 25;
+  return xp + mejorRacha() * 5 * 5;
+}
+
+function nivelDeXp(xp) {
+  let actual = NIVELES[0], siguiente = null;
+  for (let i = 0; i < NIVELES.length; i++) {
+    if (xp >= NIVELES[i].min) { actual = NIVELES[i]; siguiente = NIVELES[i + 1] || null; }
+  }
+  return { actual, siguiente, faltan: siguiente ? siguiente.min - xp : 0 };
+}
+
+/** Los últimos 7 días indicados, empezando por hoy hacia atrás. */
+function ultimosSieteDias(hoy = hoyISO()) {
+  const dias = diasConMovimientos();
+  const base = deISO(hoy) || new Date();
+  const salida = [];
+  for (let i = 6; i >= 0; i--) {
+    const f = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
+    const iso = isoDe(f);
+    salida.push({
+      iso,
+      hecho: dias.has(iso),
+      hoy: i === 0,
+      etiqueta: new Intl.DateTimeFormat(CONFIG.LOCALE, { weekday: 'narrow' }).format(f)
+    });
+  }
+  return salida;
+}
+
+const LOGROS = [
+  { id: 'primer-paso', ico: '🌱', t: 'Primer paso', d: 'Registra tu primer movimiento', test: () => estado.movimientos.length >= 1 },
+  { id: 'constancia', ico: '🔥', t: 'Racha de 7', d: '7 días seguidos registrando', test: () => mejorRacha() >= 7 },
+  { id: 'veterano', ico: '⚔️', t: 'Racha de 30', d: '30 días seguidos registrando', test: () => mejorRacha() >= 30 },
+  { id: 'centinela', ico: '🛡️', t: 'Centinela', d: 'Registra 100 movimientos', test: () => estado.movimientos.length >= 100 },
+  { id: 'mes-completo', ico: '📅', t: 'Mes completo', d: 'Empieza 5 días del mes a tiempo', test: () => primerosDelMes() >= 5 },
+  { id: 'experto', ico: '🏆', t: 'Experto', d: 'Alcanza el nivel Experto', test: () => nivelDeXp(calcularXP()).actual.min >= 1200 }
+];
+
+/** Cuántos de los primeros días del mes actual ya tienen registro. */
+function primerosDelMes() {
+  const hoy = new Date();
+  const prefijo = `${hoy.getFullYear()}-${pad2(hoy.getMonth() + 1)}`;
+  const dias = diasConMovimientos();
+  let n = 0;
+  for (let d = 1; d <= hoy.getDate(); d++) {
+    if (dias.has(`${prefijo}-${pad2(d)}`)) n++;
+  }
+  return n;
+}
+
+/**
+ * Alertas útiles, no sermoneadoras. Devuelve como máximo dos.
+ * Sin ingresos registrados preferimos sugerir acción antes que regañar.
+ */
+function alertasProgreso() {
+  const salida = [];
+  const racha = rachaActual();
+  const mes = delMesActual();
+  const ingresos = totalesDe(mes).ingresos;
+  const dias = ultimosSieteDias();
+  const hoyHecho = dias[dias.length - 1].hecho;
+  const largos = dias.filter(d => !d.hecho).length;
+
+  if (estado.movimientos.length && !hoyHecho && ingresos === 0) {
+    salida.push({
+      clase: 'alerta', ico: '💡',
+      t: 'Todavía no registras ingresos este mes. Si ya los recibiste, anótalos para que tu balance sea real.'
+    });
+  } else if (estado.movimientos.length && !hoyHecho) {
+    salida.push({
+      clase: 'alerta info', ico: '📝',
+      t: racha > 0
+        ? `Llevas ${racha} día${racha === 1 ? '' : 's'} seguidos. Un solo registro hoy mantiene la racha.`
+        : 'Hoy todavía no registras nada. Un solo movimiento mantiene viva tu racha.'
+    });
+  } else if (racha >= 7 && largos === 0) {
+    salida.push({ clase: 'alerta bien', ico: '🔥', t: `¡${racha} días seguidos! Llevas más de una semana sin fallar.` });
+  }
+
+  const estoMes = mes.filter(m => m.tipo === 'egreso');
+  if (estoMes.length >= 10) {
+    const gastoPromedio = r2(estoMes.reduce((a, m) => a + m.monto, 0) / estoMes.length);
+    if (gastoPromedio > 0) {
+      salida.push({
+        clase: 'alerta info', ico: '📊',
+        t: `Gastaste ${fmtMoneda(gastoPromedio)} por movimiento este mes (${estoMes.length} movimientos).`
+      });
+    }
+  }
+  return salida.slice(0, 2);
+}
+
+/** Atajos: las categorías más usadas primero, con su último monto. */
+function atajosRapidos() {
+  const conteo = new Map();
+  for (const m of estado.movimientos) {
+    const previo = conteo.get(m.categoria) || { veces: 0, ultimo: '', monto: 0 };
+    conteo.set(m.categoria, {
+      veces: previo.veces + 1,
+      ultimo: m.fecha,
+      monto: m.monto
+    });
+  }
+  return [...conteo.entries()]
+    .map(([categoria, d]) => ({ categoria, ...d }))
+    .sort((a, b) => b.veces - a.veces || (a.ultimo < b.ultimo ? 1 : -1))
+    .slice(0, 8);
+}
+
+
+/* =========================================================================
    Render
    ========================================================================= */
 function render() {
@@ -1445,6 +1727,14 @@ function renderDashboard() {
   $('#d-total-ingresos').textContent = fmtMoneda(tot.ingresos);
   $('#d-total-egresos').textContent = fmtMoneda(tot.egresos);
 
+  // La racha solo aparece si hay historial: si es 0, no aporta nada.
+  const racha = rachaActual();
+  const miniRacha = $('#d-racha-mini');
+  if (miniRacha) {
+    miniRacha.style.display = racha > 0 ? '' : 'none';
+    if (racha > 0) miniRacha.querySelector('.v').textContent = `🔥 ${racha} día${racha === 1 ? '' : 's'}`;
+  }
+
   const mes = new Intl.DateTimeFormat(CONFIG.LOCALE, { month: 'long', year: 'numeric' }).format(new Date());
   const tMes = totalesDe(delMesActual());
   $('#d-mes-ingresos').textContent = fmtMoneda(tMes.ingresos);
@@ -1471,7 +1761,75 @@ function renderDashboard() {
     cont.innerHTML = estado.cuentas.map(tarjetaCuenta).join('');
   }
 
+  renderProgreso();
   renderGraficasSiHaceFalta();
+}
+
+/* =========================================================================
+   Render de la tarjeta "Tu progreso"
+   ========================================================================= */
+function renderProgreso() {
+  const xp = calcularXP();
+  const racha = rachaActual();
+  const nivel = nivelDeXp(xp);
+  const enProgreso = xp - nivel.actual.min;
+  const rango = nivel.siguiente ? nivel.siguiente.min - nivel.actual.min : 1;
+  const pct = nivel.siguiente ? Math.min(100, Math.round((enProgreso / rango) * 100)) : 100;
+
+  $('#p-nivel').textContent = nivel.actual.nombre;
+  $('#p-xp').textContent = `${xp} XP`;
+  $('#p-barra').style.width = pct + '%';
+
+  $('#p-sub').textContent = racha > 0
+    ? `🔥 ${racha} día${racha === 1 ? '' : 's'} seguidos · mejor racha: ${mejorRacha()}`
+    : `${estado.movimientos.length} movimiento${estado.movimientos.length === 1 ? '' : 's'} registrados`;
+
+  $('#p-siguiente').textContent = nivel.siguiente
+    ? `Te faltan ${nivel.faltan} XP para ${nivel.siguiente.nombre}`
+    : 'Nivel máximo alcanzado. Eres un Maestro de tus finanzas.';
+
+  // Cumplimiento diario
+  const dias = ultimosSieteDias();
+  $('#p-dias').innerHTML = dias.map(d => `
+    <div class="dia ${d.hecho ? 'hecho' : ''} ${d.hoy ? 'hoy' : ''}" title="${d.hecho ? 'Registrado' : 'Sin registro'}">
+      <span class="punto ${d.hecho ? '' : 'vacio'}">${d.hecho ? '✓' : '·'}</span>
+      <span>${d.etiqueta}</span>
+    </div>`).join('');
+
+  // Alertas
+  const alertas = alertasProgreso();
+  $('#p-alertas').innerHTML = alertas.map(a => `
+    <div class="${a.clase}" style="margin-bottom:8px">
+      <span class="ico">${a.ico}</span><span>${esc(a.t)}</span>
+    </div>`).join('');
+
+  // Logros
+  $('#p-logros').innerHTML = LOGROS.map(l => {
+    const ok = l.test();
+    return `<div class="logro ${ok ? 'logrado' : ''}">
+      <span class="ico">${l.ico}</span>
+      <span><span class="t">${esc(l.t)}</span><br><span class="d">${esc(l.d)}</span></span>
+    </div>`;
+  }).join('');
+}
+
+/** Rellena el modal con los atajos según el uso real del usuario. */
+function renderAtajos() {
+  const cont = $('#mm-atajos');
+  if (!cont) return;
+
+  const usados = atajosRapidos();
+  const preds = estado.categorias.filter(c => !usados.some(u => u.categoria === c.nombre)).slice(0, 4);
+  const base = preds.length ? preds.map(c => ({ categoria: c.nombre, veces: 0, monto: 0 })) : [];
+
+  const todos = [...usados, ...base];
+  if (!todos.length) { cont.innerHTML = '<span class="ayuda">Crea categorías para ver atajos aquí.</span>'; return; }
+
+  cont.innerHTML = todos.map((u, i) => `
+    <button type="button" class="atajo" data-atajo="${esc(u.categoria)}" data-monto="${u.monto || ''}">
+      <span>${esc(u.categoria)}</span>
+      <span class="monto">${u.monto ? fmtMonedaCorta(u.monto) : (i === 0 ? 'usado' : 'usar')}</span>
+    </button>`).join('');
 }
 
 function tarjetaCuenta(c) {
@@ -1816,9 +2174,21 @@ function mostrarErrores(id, lista) {
 /* =========================================================================
    Movimiento: alta / edición
    ========================================================================= */
+/** Atajo global: si no hay cuentas, guía al usuario en vez de fallar. */
+function abrirNuevoMovimiento() {
+  if (!estado.cuentas.length) {
+    toast('Primero crea una cuenta (pestaña Cuentas).', 'error');
+    irA('cuentas');
+    return;
+  }
+  abrirFormMovimiento(null);
+}
+
 function abrirFormMovimiento(id) {
   estado.editandoMovimiento = id || null;
   const m = id ? estado.movimientos.find(x => x.id === id) : null;
+
+  renderAtajos();
 
   $('#mm-titulo').textContent = m ? 'Editar movimiento' : 'Nuevo movimiento';
   $('#mm-guardar').textContent = m ? 'Guardar cambios' : 'Guardar';
@@ -1902,7 +2272,34 @@ async function enviarFormMovimiento(e) {
 
   btn.disabled = false;
   btn.textContent = editando ? 'Guardar cambios' : 'Guardar';
-  if (ok) cerrarModal('modal-movimiento');
+  if (ok) {
+    cerrarModal('modal-movimiento');
+    if (!editando) mostrarResumenTrasGuardar(datos);
+  }
+}
+
+/**
+ * Tras guardar, responde las dos preguntas que el usuario se hace siempre:
+ * "¿cuánto me queda este mes?" y "¿cómo voy con la racha?".
+ */
+function mostrarResumenTrasGuardar(datos) {
+  const mes = new Date().getFullYear() + '-' + pad2(new Date().getMonth() + 1);
+  const delMes = estado.movimientos.filter(m => m.fecha.slice(0, 7) === mes);
+  const t = totalesDe(delMes);
+  const racha = rachaActual();
+
+  const partes = [];
+  if (datos.tipo === 'egreso') {
+    partes.push(`Te queda ${fmtMoneda(t.balance)} de ${fmtMoneda(t.ingresos)}`);
+    const cat = delMes.filter(m => m.tipo === 'egreso' && m.categoria === datos.categoria);
+    const gastadoCat = r2(cat.reduce((a, m) => a + m.monto, 0));
+    partes.push(`${datos.categoria}: ${fmtMoneda(gastadoCat)} este mes`);
+  } else {
+    partes.push(`Disponible: ${fmtMoneda(t.balance)}`);
+  }
+  if (racha > 0) partes.push(`🔥 ${racha} día${racha === 1 ? '' : 's'}`);
+
+  toast(partes.join(' · '), 'exito');
 }
 
 async function eliminarMovimiento(id) {
@@ -2160,15 +2557,24 @@ function registrarEventos() {
   });
   $('#btn-config').addEventListener('click', abrirConfig);
 
-  // Formulario de movimiento
-  $('#btn-nuevo-movimiento').addEventListener('click', () => {
-    if (!estado.cuentas.length) {
-      toast('Primero crea una cuenta (pestaña Cuentas).', 'error');
-      irA('cuentas');
-      return;
-    }
-    abrirFormMovimiento(null);
+  // Botón flotante: atajo global a "nuevo movimiento"
+  $('#btn-rapido').addEventListener('click', abrirNuevoMovimiento);
+  $('#btn-nuevo-movimiento').addEventListener('click', abrirNuevoMovimiento);
+
+  // Atajos del modal: un toque rellena categoría y monto
+  $('#mm-atajos').addEventListener('click', e => {
+    const b = e.target.closest('[data-atajo]');
+    if (!b) return;
+    const sel = $('#mm-categoria');
+    sel.value = b.dataset.atajo;
+    sel.dataset.valor = b.dataset.atajo;
+    if (b.dataset.monto) $('#mm-monto').value = b.dataset.monto;
+    if (!$('#mm-descripcion').value) $('#mm-descripcion').value = b.dataset.atajo;
+    $('#mm-monto').focus();
   });
+
+  // Formulario de movimiento
+  $('#form-movimiento').addEventListener('submit', enviarFormMovimiento);
   $('#form-movimiento').addEventListener('submit', enviarFormMovimiento);
   $('#mm-btn-nueva-categoria').addEventListener('click', async () => {
     const input = $('#mm-nueva-categoria');

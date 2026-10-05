@@ -38,7 +38,9 @@ vm.runInContext(codigo + `
   saldoDeCuenta, balanceTotal, totalesDe, filtrarMovimientos,
   agruparPorMes, egresosPorCategoria,
   normalizarMovimiento, normalizarCuenta,
-  esc, filaMovimiento, tarjetaCuenta, nombreCuenta
+  esc, filaMovimiento, tarjetaCuenta, nombreCuenta,
+  rachaActual, mejorRacha, calcularXP, nivelDeXp, ultimosSieteDias,
+  atajosRapidos, NIVELES, LOGROS, alertasProgreso
 };`, sandbox, { filename: 'index.html#inline' });
 
 // --- miniature test runner -------------------------------------------------
@@ -183,6 +185,86 @@ igual(tarjeta.includes(malware), false, 'la tarjeta de cuenta NO contiene HTML c
 cierto(tarjeta.includes('data-editar-cuenta="c1"'), 'la tarjeta trae el botón de editar');
 igual(nombreCuenta('c1'), 'Banco', 'nombreCuenta resuelve el id correcto');
 igual(nombreCuenta('borrada'), 'Cuenta eliminada', 'cuenta borrada se etiqueta, no se rompe');
+
+// =========================================================================
+grupo('Progreso: rachas, XP, niveles y logros');
+const P = sandbox.__api;
+const conMovimientos = (fechas) => {
+  estado.movimientos = fechas.map((f, i) => ({
+    id: 'x' + i, fecha: f, descripcion: 'd', categoria: 'Comida',
+    tipo: 'egreso', monto: 10, cuentaId: 'c1', creadoEn: ''
+  }));
+  estado.cuentas = [{ id: 'c1', nombre: 'Banco', tipo: 'banco', moneda: 'MXN', saldoInicial: 0 }];
+};
+
+// --- rachaActual ---
+estado.movimientos = [];
+igual(P.rachaActual(), 0, 'sin movimientos → racha 0');
+
+conMovimientos(['2026-03-10', '2026-03-11', '2026-03-12']);
+igual(P.rachaActual('2026-03-12'), 3, 'racha de 3 días terminando hoy');
+igual(P.rachaActual('2026-03-13'), 3, 'día de gracia: hoy vacío pero ayer sí, la racha sigue');
+igual(P.rachaActual('2026-03-15'), 0, 'dos días de silencio → racha perdida');
+
+conMovimientos(['2026-03-01', '2026-03-02', '2026-03-04', '2026-03-05']);
+igual(P.rachaActual('2026-03-05'), 2, 'hueco intermedio rompe la racha');
+igual(P.mejorRacha(), 2, 'mejor racha recuerda el tramo más largo');
+
+conMovimientos(['2026-02-27', '2026-02-28', '2026-03-01']);
+igual(P.rachaActual('2026-03-01'), 3, 'racha que cruza el cambio de mes');
+igual(P.mejorRacha(), 3, 'mejor racha también cruza meses');
+
+// --- XP y niveles ---
+conMovimientos(['2026-03-10', '2026-03-11']);
+const xpPequeno = P.calcularXP();
+igual(nivelDe(xpPequeno), 'Principiante', 'pocos movimientos → Principiante');
+
+conMovimientos(Array.from({ length: 120 }, (_, i) => `2026-03-${String((i % 28) + 1).padStart(2, '0')}`));
+const xpAlto = P.calcularXP();
+cierto(xpAlto > xpPequeno, 'más movimientos → más XP');
+igual(P.NIVELES.length, 5, 'cinco niveles definidos');
+igual(P.nivelDeXp(0).actual.nombre, 'Principiante', 'XP 0 → Principiante');
+igual(P.nivelDeXp(99999).actual.nombre, 'Maestro', 'XP altísimo → Maestro');
+igual(P.nivelDeXp(99999).siguiente, null, 'el nivel máximo no tiene siguiente');
+const rangoMedio = P.nivelDeXp(400);
+igual([rangoMedio.actual.nombre, rangoMedio.siguiente.nombre, rangoMedio.faltan],
+  ['Constante', 'Disciplinado', 100], 'calcula lo que falta para el siguiente nivel');
+
+function nivelDe(xp) { return P.nivelDeXp(xp).actual.nombre; }
+
+// --- ultimosSieteDias ---
+conMovimientos(['2026-03-12', '2026-03-10']);
+const siete = P.ultimosSieteDias('2026-03-12');
+igual(siete.length, 7, 'siempre 7 días');
+igual(siete[6].iso, '2026-03-12', 'el último es hoy');
+igual(siete[0].iso, '2026-03-06', 'el primero es hace 6 días');
+igual(siete.filter(d => d.hecho).length, 2, 'marca solo los días con registro');
+igual(siete[6].hoy, true, 'identifica el día de hoy');
+
+// --- atajos ---
+estado.movimientos = [
+  { id: 'a', fecha: '2026-03-01', descripcion: 'x', categoria: 'Comida', tipo: 'egreso', monto: 100, cuentaId: 'c1', creadoEn: '' },
+  { id: 'b', fecha: '2026-03-02', descripcion: 'x', categoria: 'Comida', tipo: 'egreso', monto: 50, cuentaId: 'c1', creadoEn: '' },
+  { id: 'c', fecha: '2026-03-03', descripcion: 'x', categoria: 'Transporte', tipo: 'egreso', monto: 20, cuentaId: 'c1', creadoEn: '' }
+];
+const atajos = P.atajosRapidos();
+igual(atajos[0].categoria, 'Comida', 'la categoría más usada va primero');
+igual(atajos[0].veces, 2, 'cuenta las apariciones');
+igual(atajos[0].monto, 50, 'guarda el último monto para prellenar');
+igual(atajos.length, 2, 'sólo devuelve categorías realmente usadas');
+
+function muchas(n) { return Array.from({ length: n }, (_, i) => ({ id: 'm' + i, fecha: '2026-03-01', descripcion: 'd', categoria: 'C' + (i % 12), tipo: 'egreso', monto: 10, cuentaId: 'c1', creadoEn: '' })); }
+
+conMovimientos([]);
+
+// --- logros ---
+igual(P.LOGROS.length, 6, 'seis logros definidos');
+igual(P.LOGROS.every(l => typeof l.test() === 'boolean'), true, 'todos los logros son evaluables');
+estado.movimientos = [{ id: 'a', fecha: new Date().toISOString().slice(0, 10), descripcion: 'x', categoria: 'Comida', tipo: 'egreso', monto: 10, cuentaId: 'c1', creadoEn: '' }];
+igual(P.LOGROS[0].test(), true, 'logro "Primer paso" con 1 movimiento');
+igual(P.LOGROS[1].test(), false, 'logro "Racha de 7" aún no cumplido');
+conMovimientos(muchas(120));
+igual(P.LOGROS[3].test(), true, 'logro "Centinela" con 100+ movimientos');
 
 console.log(`\n${'='.repeat(56)}\n${ok} pruebas correctas, ${fallos} fallo(s)\n${'='.repeat(56)}`);
 process.exit(fallos ? 1 : 0);

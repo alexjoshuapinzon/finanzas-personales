@@ -67,6 +67,28 @@ revisa((html.match(/<style/g) || []).length === 1, 'exactamente 1 bloque <style>
 const jsInline = js;
 revisa(!jsInline.includes('</script>'), 'el JS inline no contiene un cierre de script');
 
+grupo('Progreso y captura rápida');
+const nuevasIds = ['btn-rapido', 'mm-atajos', 'p-nivel', 'p-xp', 'p-barra', 'p-siguiente',
+  'p-sub', 'p-dias', 'p-logros', 'p-alertas', 'd-racha-mini'];
+const faltanNuevas = nuevasIds.filter(id => !idsHtml.has(id));
+revisa(faltanNuevas.length === 0, `los ${nuevasIds.length} ids nuevos existen`, `faltan: ${faltanNuevas.join(', ')}`);
+revisa(js.includes('function rachaActual'), 'implementa el cálculo de racha');
+revisa(js.includes('function mejorRacha'), 'implementa la mejor racha');
+revisa(js.includes('function calcularXP'), 'implementa el cálculo de XP');
+revisa(js.includes('function nivelDeXp'), 'implementa los niveles');
+revisa(js.includes('function atajosRapidos'), 'implementa los atajos');
+revisa(js.includes('function mostrarResumenTrasGuardar'), 'muestra el resumen tras guardar');
+revisa(js.includes('function renderProgreso'), 'renderiza la tarjeta de progreso');
+revisa(js.includes('function alertasProgreso'), 'genera alertas');
+revisa(html.includes('class="fab"'), 'el botón flotante existe en el HTML');
+revisa(/catálogo|categoría.*más usada primero|las categorías más usadas primero/i.test(js),
+  'los atajos se ordenan por uso real');
+// El día de gracia evita regañar al usuario a media mañana.
+revisa(/getDate\(\) - 1/.test(js), 'la racha tiene día de gracia');
+revisa(js.includes('const LOGROS') && js.includes('const NIVELES'),
+  'logros y niveles definidos como datos, no hardcodeados en el render');
+revisa(/NIVELES\.length/.test(js), 'el test de logros referencia NIVELES');
+
 grupo('Modo oscuro y responsive (requisitos de diseño)');
 revisa(/prefers-color-scheme:\s*dark/.test(html), 'tema oscuro según el sistema');
 revisa(/@media \(max-width:760px\)/.test(html), 'la tabla se adapta a móvil');
